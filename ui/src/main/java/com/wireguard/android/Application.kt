@@ -12,11 +12,15 @@ import android.os.StrictMode.ThreadPolicy
 import android.os.StrictMode.VmPolicy
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.google.android.material.color.DynamicColors
+import com.wireguard.android.activity.TunnelToggleActivity
 import com.wireguard.android.backend.Backend
 import com.wireguard.android.backend.GoBackend
 import com.wireguard.android.backend.WgQuickBackend
@@ -82,6 +86,21 @@ class Application : android.app.Application() {
         return backend
     }
 
+    private fun publishToggleShortcut() {
+        val intent = Intent(applicationContext, TunnelToggleActivity::class.java).setAction(Intent.ACTION_VIEW)
+        val shortcut = ShortcutInfoCompat.Builder(applicationContext, TOGGLE_SHORTCUT_ID)
+            .setShortLabel(getString(R.string.shortcut_toggle_tunnel_short))
+            .setLongLabel(getString(R.string.shortcut_toggle_tunnel_long))
+            .setIcon(IconCompat.createWithResource(applicationContext, R.mipmap.ic_launcher))
+            .setIntent(intent)
+            .build()
+        try {
+            ShortcutManagerCompat.pushDynamicShortcut(applicationContext, shortcut)
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to publish toggle shortcut", e)
+        }
+    }
+
     override fun onCreate() {
         Log.i(TAG, USER_AGENT)
         super.onCreate()
@@ -108,6 +127,7 @@ class Application : android.app.Application() {
         }
         tunnelManager = TunnelManager(FileConfigStore(applicationContext))
         tunnelManager.onCreate()
+        coroutineScope.launch(Dispatchers.IO) { publishToggleShortcut() }
         coroutineScope.launch(Dispatchers.IO) {
             try {
                 backend = determineBackend()
@@ -132,6 +152,7 @@ class Application : android.app.Application() {
     companion object {
         val USER_AGENT = String.format(Locale.ENGLISH, "WireGuard/%s (Android %d; %s; %s; %s %s; %s; %s)", BuildConfig.VERSION_NAME, Build.VERSION.SDK_INT, if (Build.SUPPORTED_ABIS.isNotEmpty()) Build.SUPPORTED_ABIS[0] else "unknown ABI", Build.BOARD, Build.MANUFACTURER, Build.MODEL, Build.FINGERPRINT, BuildConfig.APPLICATION_ID)
         private const val TAG = "WireGuard/Application"
+        private const val TOGGLE_SHORTCUT_ID = "toggle_last_used_tunnel"
         private lateinit var weakSelf: WeakReference<Application>
 
         fun get(): Application {
