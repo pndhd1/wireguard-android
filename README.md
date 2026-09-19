@@ -1,3 +1,8 @@
+## Fork changes
+
+- Launcher shortcut to toggle the last used tunnel
+- Built-in updater disabled
+
 # Android GUI for [WireGuard](https://www.wireguard.com/)
 
 **[Download from the Play Store](https://play.google.com/store/apps/details?id=com.wireguard.android)**
