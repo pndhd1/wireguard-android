@@ -5,6 +5,7 @@
 package com.wireguard.android.activity
 
 import android.content.ComponentName
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.service.quicksettings.TileService
@@ -27,7 +28,7 @@ class TunnelToggleActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { toggleTunnelWithPermissionsResult() }
 
     private fun toggleTunnelWithPermissionsResult() {
-        val tunnel = Application.getTunnelManager().lastUsedTunnel ?: return
+        val tunnel = Application.getTunnelManager().lastUsedTunnel ?: return finish()
         lifecycleScope.launch {
             try {
                 tunnel.setStateAsync(Tunnel.State.TOGGLE)
@@ -48,6 +49,13 @@ class TunnelToggleActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
+            Application.getTunnelManager().getTunnels()
+            if (Application.getTunnelManager().lastUsedTunnel == null) {
+                Log.d(TAG, "No tunnel set, so launching main activity")
+                startActivity(Intent(this@TunnelToggleActivity, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                finish()
+                return@launch
+            }
             if (Application.getBackend() is GoBackend) {
                 try {
                     val intent = GoBackend.VpnService.prepare(this@TunnelToggleActivity)

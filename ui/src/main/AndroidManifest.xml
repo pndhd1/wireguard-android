@@ -52,6 +52,7 @@
         <activity
             android:name=".activity.TunnelToggleActivity"
             android:excludeFromRecents="true"
+            android:taskAffinity="${applicationId}.toggle"
             android:theme="@style/NoBackgroundTheme" />
 
         <activity
